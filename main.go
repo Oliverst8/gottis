@@ -17,8 +17,8 @@ func main() {
 	_, err := GetConfig()
 
 	if err != nil {
-		//Setup()
-		//return
+		Setup()
+		return
 	}
 
 	fmt.Println("Hello World!")

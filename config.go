@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 type Config struct {
@@ -18,8 +19,7 @@ type User struct {
 }
 
 func GetConfigDir() (string, error) {
-	return "./gottis", nil
-	/*var configDir string
+	var configDir string
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -38,7 +38,7 @@ func GetConfigDir() (string, error) {
 		return "", fmt.Errorf("unsupported platform")
 	}
 
-	return configDir, nil*/
+	return configDir, nil
 }
 
 func GetConfigPath() (string, error) {

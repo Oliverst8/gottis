@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -34,6 +35,39 @@ func Setup() {
 	}
 	setupSubmit, lang := getUserInputForConfig()
 
+	var user User
+
+	if setupSubmit {
+		user = getKattisInfo()
+	}
+	var config Config
+	config.DefaultLang = langs[lang]
+	config.User = user
+
+	jsonData, err := json.MarshalIndent(config, "", " ")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = os.WriteFile("config.json", jsonData, os.ModePerm)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func getKattisInfo() User {
+	var user User
+	fmt.Println("We need information from your kattis account, the information can be found on the following link (You need to login first):")
+	fmt.Println("https://open.kattis.com/download/kattisrc")
+	fmt.Println("Please input your Kattis username:")
+	var answer string
+	readInput(&answer)
+	user.Username = strings.Trim(answer, " \n")
+	fmt.Println("Please input your Kattis Token:")
+	readInput(&answer)
+	user.Token = strings.Trim(answer, " \n")
+	return user
 }
 
 func getUserInputForConfig() (bool, int) {
