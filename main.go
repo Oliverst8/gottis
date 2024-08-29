@@ -36,7 +36,7 @@ func main() {
 			fmt.Println("Please supply a name for the Kattis excercise when initializing. See \"gottis help\" for more info")
 			break
 		}
-		Init(os.Args[2])
+		Init(os.Args[2], "java")
 		break
 	case "t":
 	case "test":
@@ -50,6 +50,10 @@ func main() {
 	case "h":
 	case "help":
 		Help()
+		break
+	case "o":
+	case "open":
+		Open()
 		break
 	default:
 		fmt.Println("Not a regocnized command please see \"gottis help\"")

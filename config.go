@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 )
 
 type Config struct {
@@ -18,8 +17,9 @@ type User struct {
 	Token    string `json:"token"`
 }
 
-func GetConfigPath() (string, error) {
-	var configDir string
+func GetConfigDir() (string, error) {
+	return "./gottis", nil
+	/*var configDir string
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -38,20 +38,32 @@ func GetConfigPath() (string, error) {
 		return "", fmt.Errorf("unsupported platform")
 	}
 
+	return configDir, nil*/
+}
+
+func GetConfigPath() (string, error) {
+
+	configDir, err := GetConfigDir()
+
+	if err != nil {
+		fmt.Println("Error getting config dir")
+		return "", nil
+	}
+
 	return filepath.Join(configDir, "config.json"), nil
 }
 
-func GetConfig() (map[string]string, error) {
+func GetConfig() (Config, error) {
 	configPath, err := GetConfigPath()
 
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
 
 	jsonFile, err := os.Open(configPath)
 
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
 
 	defer jsonFile.Close()
@@ -61,8 +73,8 @@ func GetConfig() (map[string]string, error) {
 	err = json.NewDecoder(jsonFile).Decode(&config)
 
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
 
-	return nil, nil
+	return config, nil
 }
