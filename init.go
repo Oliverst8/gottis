@@ -1,6 +1,8 @@
 package main
 
 import (
+	"archive/zip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,11 +10,16 @@ import (
 	"strings"
 )
 
+type projectConfig struct {
+	Language string `json:"language"`
+	MainFile string `json:"mainFile"`
+}
+
 func Capatalize(word string) string {
 	return strings.ToUpper(word[:1]) + word[1:]
 }
 
-func createProjectFile(projectName string, lang string) {
+func createProjectFile(projectName string, lang string) string {
 
 	fileExtention := ".java"
 
@@ -27,12 +34,16 @@ func createProjectFile(projectName string, lang string) {
 		fileContent = ""
 	}
 
-	err := os.WriteFile(capatalizedProjectName+fileExtention, []byte(fileContent), os.ModePerm)
+	fileName := capatalizedProjectName + fileExtention
+
+	err := os.WriteFile(fileName, []byte(fileContent), os.ModePerm)
 
 	if err != nil {
 		fmt.Println("error")
 		fmt.Println(err)
 	}
+
+	return fileName
 }
 
 func downloadTestFiles(problemName string) error {
@@ -68,7 +79,39 @@ func downloadTestFiles(problemName string) error {
 }
 
 func unzipFile(filename string) error {
+	zipFile, err := zip.OpenReader(filename)
+
+	if err != nil {
+		return fmt.Errorf("failed to open zip file: %w", err)
+	}
+	defer zipFile.Close()
+
+	for _, file := range zipFile.File {
+		rc, err := file.Open()
+
+		if err != nil {
+			return fmt.Errorf("failed to open file in zip archive: %w", err)
+		}
+
+		defer rc.Close()
+
+		createdFile, err := os.Create(file.Name)
+
+		if err != nil {
+			return fmt.Errorf("failed to create file: %w", err)
+		}
+		defer createdFile.Close()
+
+		if _, err := io.Copy(createdFile, rc); err != nil {
+			return fmt.Errorf("failed to extract file: %w", err)
+		}
+
+	}
 	return nil
+}
+
+func deleteFile(fileName string) error {
+	return os.Remove(fileName)
 }
 
 func getTestFiles(problemName string) {
@@ -81,6 +124,33 @@ func getTestFiles(problemName string) {
 
 	err = unzipFile(problemName + ".zip")
 
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = deleteFile(problemName + ".zip")
+
+}
+
+func createProjectConfigFile(mainFile string) {
+	var projectConfig projectConfig
+
+	projectConfig.MainFile = mainFile
+	config, err := GetConfig()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	projectConfig.Language = config.DefaultLang
+
+	jsonData, err := json.MarshalIndent(projectConfig, "", " ")
+
+	err = os.WriteFile(".gottis", jsonData, os.ModePerm)
+
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func Init(projectName string, lang string) {
@@ -93,8 +163,10 @@ func Init(projectName string, lang string) {
 	}
 	os.Chdir("./" + projectName)
 
-	createProjectFile(projectName, lang)
+	mainFile := createProjectFile(projectName, lang)
 
 	getTestFiles(projectName)
+
+	createProjectConfigFile(mainFile)
 
 }
