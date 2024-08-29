@@ -21,42 +21,32 @@ func main() {
 		return
 	}
 
-	fmt.Println("Hello World!")
 	if len(os.Args) < 2 {
 		fmt.Println("Please supply an argument when using gottis.\n\"gottis <argument>\" see \"gottis help\" for more info")
 		return
 	}
 	choice := Sanitize(os.Args[1])
+	os.Chdir("twosum")
+	choice = "t"
 
-	fmt.Println("Entered switch case")
-	switch choice {
-	case "i":
-	case "init":
+	switch {
+	case choice == "i" || choice == "init":
 		if len(os.Args) != 3 {
 			fmt.Println("Please supply a name for the Kattis excercise when initializing. See \"gottis help\" for more info")
-			break
+			return
 		}
 		Init(os.Args[2], "java")
-		break
-	case "t":
-	case "test":
+	case choice == "t" || choice == "test":
 		Test()
-		break
-	case "s":
-	case "submit":
+	case choice == "s" || choice == "submit":
 		fmt.Println("Submitting to Kattis")
 		Submit()
-		break
-	case "h":
-	case "help":
+	case choice == "h" || choice == "help":
 		Help()
-		break
-	case "o":
-	case "open":
+	case choice == "o" || choice == "open":
 		Open()
-		break
 	default:
 		fmt.Println("Not a regocnized command please see \"gottis help\"")
-		break
 	}
+
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"archive/zip"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,33 +9,27 @@ import (
 	"strings"
 )
 
-type projectConfig struct {
-	Language string `json:"language"`
-	MainFile string `json:"mainFile"`
-}
-
 func Capatalize(word string) string {
 	return strings.ToUpper(word[:1]) + word[1:]
 }
 
 func createProjectFile(projectName string, lang string) string {
 
-	fileExtention := ".java"
+	currentLang, err := GetLanguage(lang)
 
-	var fileContent string
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fileExtention := currentLang.Extensions[0]
 
 	capatalizedProjectName := Capatalize(projectName)
 
-	switch lang {
-	case "java":
-		fileContent = "import java.util.Scanner\n" + "\n" + "public class " + capatalizedProjectName + " {\n" + "   public static void main(String[] args) {\n" + "       Scanner sc = new Scanner();\n" + "       sc.close();\n" + "   }\n" + "}"
-	default:
-		fileContent = ""
-	}
+	fileContent := currentLang.Boilerplate(projectName)
 
 	fileName := capatalizedProjectName + fileExtention
 
-	err := os.WriteFile(fileName, []byte(fileContent), os.ModePerm)
+	err = os.WriteFile(fileName, []byte(fileContent), os.ModePerm)
 
 	if err != nil {
 		fmt.Println("error")
@@ -132,27 +125,6 @@ func getTestFiles(problemName string) {
 
 }
 
-func createProjectConfigFile(mainFile string) {
-	var projectConfig projectConfig
-
-	projectConfig.MainFile = mainFile
-	config, err := GetConfig()
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	projectConfig.Language = config.DefaultLang
-
-	jsonData, err := json.MarshalIndent(projectConfig, "", " ")
-
-	err = os.WriteFile(".gottis", jsonData, os.ModePerm)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
 func Init(projectName string, lang string) {
 
 	fmt.Println("Initialising project")
@@ -167,6 +139,6 @@ func Init(projectName string, lang string) {
 
 	getTestFiles(projectName)
 
-	createProjectConfigFile(mainFile)
+	CreateProjectConfigFile(mainFile)
 
 }

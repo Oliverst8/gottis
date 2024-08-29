@@ -9,8 +9,6 @@ import (
 	"strings"
 )
 
-var langs = [5]string{"java", "go", "c", "python", "c#"}
-
 func Setup() {
 	path, err := GetConfigDir()
 	if err != nil {
@@ -36,12 +34,12 @@ func Setup() {
 	setupSubmit, lang := getUserInputForConfig()
 
 	var user User
-
 	if setupSubmit {
 		user = getKattisInfo()
 	}
+
 	var config Config
-	config.DefaultLang = langs[lang]
+	config.DefaultLang = langs[lang].Name
 	config.User = user
 
 	jsonData, err := json.MarshalIndent(config, "", " ")
@@ -74,12 +72,12 @@ func getUserInputForConfig() (bool, int) {
 	fmt.Println("Choose a default language for gottis:")
 	printLanguages()
 	lang, err := readInt()
-	validOption := isValidAndInRange(lang, err, 1, len(langs))
+	validOption := isValidAndInRange(lang, err, 0, len(langs)-1)
 	for !validOption {
 		fmt.Println("Not a valid option. Please input a number from the following list:")
 		printLanguages()
 		lang, err = readInt()
-		validOption = isValidAndInRange(lang, err, 1, len(langs))
+		validOption = isValidAndInRange(lang, err, 0, len(langs)-1)
 	}
 
 	fmt.Println("Do you want to be able to submit to kattis through gottis? [y/N]")
@@ -94,7 +92,7 @@ func isValidAndInRange(num int, err error, a int, b int) bool {
 
 func printLanguages() {
 	for index, lang := range langs {
-		fmt.Printf("%d. %s\n", index+1, lang)
+		fmt.Printf("%d. %s\n", index, lang.Name)
 	}
 }
 
