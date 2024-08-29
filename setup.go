@@ -32,28 +32,30 @@ func Setup() {
 	if err != nil {
 		return
 	}
-	getUserInputForConfig()
+	setupSubmit, lang := getUserInputForConfig()
+
 }
 
 func getUserInputForConfig() (bool, int) {
-	fmt.Println("Do you want to be able to submit to kattis through gottis? [y/N]")
-	setupSubmit := readBool()
-
 	fmt.Println("Choose a default language for gottis:")
 	printLanguages()
 	lang, err := readInt()
-	validOption := err != nil && lang > 0 && lang <= len(langs)
+	validOption := isValidAndInRange(lang, err, 1, len(langs))
 	for !validOption {
 		fmt.Println("Not a valid option. Please input a number from the following list:")
 		printLanguages()
 		lang, err = readInt()
-		validOption = err != nil && lang > 0 && lang <= len(langs)
+		validOption = isValidAndInRange(lang, err, 1, len(langs))
 	}
 
-	if setupSubmit {
-		fmt.Println()
-	}
-	return true, 1
+	fmt.Println("Do you want to be able to submit to kattis through gottis? [y/N]")
+	setupSubmit := readBool()
+
+	return setupSubmit, lang
+}
+
+func isValidAndInRange(num int, err error, a int, b int) bool {
+	return err == nil && num >= a && num <= b
 }
 
 func printLanguages() {
@@ -73,8 +75,9 @@ func readBool() bool {
 }
 
 func readInput(answer *string) {
-	_, err := fmt.Scanf("%s \n", &answer)
+	_, err := fmt.Scanf("%s \n", answer)
 	if err != nil {
+		fmt.Println(err)
 		return
 	}
 }
@@ -84,6 +87,7 @@ func readInt() (int, error) {
 	readInput(&input)
 	readAnswer, err := strconv.Atoi(input)
 	if err != nil {
+		fmt.Println(err)
 		return 0, err
 	}
 	return readAnswer, nil
