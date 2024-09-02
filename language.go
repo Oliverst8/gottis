@@ -10,14 +10,15 @@ type Language struct {
 	Boilerplate  func(string) string
 	CompilerName string
 	CompilerArgs []string
+	RunName      string
 }
 
 var langs = [5]Language{
-	{Name: "java", Extensions: []string{".java"}, Boilerplate: javaBoilerplate, CompilerName: "javac", CompilerArgs: []string{}},
-	{Name: "go", Extensions: []string{".go"}, Boilerplate: goBoileplate, CompilerName: "", CompilerArgs: []string{}},
-	{Name: "c", Extensions: []string{".c"}, Boilerplate: cBoileplate, CompilerName: "", CompilerArgs: []string{}},
-	{Name: "python", Extensions: []string{".py"}, Boilerplate: pythonBoileplate, CompilerName: "", CompilerArgs: []string{}},
-	{Name: "c#", Extensions: []string{".cs"}, Boilerplate: csBoileplate, CompilerName: "", CompilerArgs: []string{}},
+	{Name: "java", Extensions: []string{".java"}, Boilerplate: javaBoilerplate, CompilerName: "javac", CompilerArgs: []string{}, RunName: "java"},
+	{Name: "go", Extensions: []string{".go"}, Boilerplate: goBoileplate, CompilerName: "", CompilerArgs: []string{}, RunName: ""},
+	{Name: "c", Extensions: []string{".c"}, Boilerplate: cBoileplate, CompilerName: "", CompilerArgs: []string{}, RunName: ""},
+	{Name: "python", Extensions: []string{".py"}, Boilerplate: pythonBoileplate, CompilerName: "", CompilerArgs: []string{}, RunName: ""},
+	{Name: "c#", Extensions: []string{".cs"}, Boilerplate: csBoileplate, CompilerName: "", CompilerArgs: []string{}, RunName: ""},
 }
 
 func GetLanguage(name string) (Language, error) {
