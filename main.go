@@ -26,8 +26,6 @@ func main() {
 		return
 	}
 	choice := Sanitize(os.Args[1])
-	os.Chdir("twosum")
-	choice = "t"
 
 	switch {
 	case choice == "i" || choice == "init":
