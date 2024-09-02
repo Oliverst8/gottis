@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 )
 
@@ -30,6 +31,18 @@ func Compile(language Language) {
 	} else {
 		// Print output if the command succeeds
 		fmt.Printf("Compilation succeeded\n%s\n", stdout.String())
+	}
+
+}
+
+func DeleteFilesWithExtension(extension string) {
+	files := getAllFileNames([]string{extension})
+
+	for _, file := range files {
+		err := os.Remove(file)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 }

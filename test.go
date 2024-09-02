@@ -160,4 +160,7 @@ func Test() {
 			fmt.Printf("---------------------------------\n\n")
 		}
 	}
+	if language.CompilerName != "" {
+		DeleteFilesWithExtension(".class")
+	}
 }
