@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 var loginurl = "https://open.kattis.com/login"
@@ -17,16 +18,17 @@ func Login() *http.Response {
 	}
 	username := config.User.Username
 	token := config.User.Token
-	body := []byte(fmt.Sprintf(`{
-		"user": %s,
-		"token": %s,
-		"script": "true"
-	}`, username, token))
-	request, err := http.NewRequest(http.MethodPost, loginurl, bytes.NewReader(body))
+	loginArgs := url.Values{}
+	loginArgs.Set("user", username)
+	loginArgs.Set("script", "true")
+	loginArgs.Set("token", token)
+
+	request, err := http.NewRequest(http.MethodPost, loginurl, bytes.NewBufferString(loginArgs.Encode()))
 	request.Header.Add(_headerKey, _headerValue)
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	client := &http.Client{}
 	res, err := client.Do(request)
-	fmt.Println(res.Cookies())
+	fmt.Println(res.StatusCode)
 	return res
 }
 
