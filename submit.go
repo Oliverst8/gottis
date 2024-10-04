@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,8 +13,28 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
+var _statusMap = map[int]string{
+	0: "New",
+	1: "New",
+	2: "Waiting for compile",
+	3: "Compiling",
+	4: "Waiting for run",
+	5: "Running",
+	6: "Judge Error",
+	// 7: "<invalid value>",
+	8:  "Compile Error",
+	9:  "Run Time Error",
+	10: "Memory Limit Exceeded",
+	11: "Output Limit Exceeded",
+	12: "Time Limit Exceeded",
+	13: "Illegal Function",
+	14: "Wrong Answer",
+	// 15: "<invalid value>",
+	16: "Accepted",
+}
 var submiturl = "https://open.kattis.com/submit"
 var loginurl = "https://open.kattis.com/login"
 var _headerKey = "User-Agent"
@@ -49,12 +71,13 @@ func Submit() {
 		log.Fatal("Error submitting to kattis")
 	}
 	fmt.Printf("Submit response: %d\n", submitRes.StatusCode)
-	response := make([]byte, 128)
-	submitRes.Body.Read(response)
-	fmt.Println(response)
+	response, err := io.ReadAll(submitRes.Body)
+	fmt.Println(string(response))
 	lastLine := strings.Split(string(response), "\n")[1]
-	submissionURL := strings.Split(lastLine, " ")[2]
+	submissionURL := strings.Trim(strings.Split(lastLine, " ")[2], "\x00")
 	fmt.Println(submissionURL)
+	showJudgement(submissionURL, loginRes.Cookies())
+	fmt.Println("Submission Finished.")
 }
 
 func getProjectFilenames(config Config) []string {
@@ -133,6 +156,85 @@ func submitFilesToKattis(files []string, cookies []*http.Cookie) (*http.Response
 	return resp, nil
 }
 
-func showJudgement(submissionURL string) {
-	
+func getSubmissionStatus(submissionURL string, cookies []*http.Cookie) (map[string]interface{}, error) {
+
+	request, err := http.NewRequest(http.MethodGet, submissionURL+"?json", bytes.NewBufferString(url.Values{}.Encode()))
+
+	if err != nil {
+		log.Fatalf("Could not generate http request %s\n", err)
+	}
+
+	request.Header.Set(_headerKey, _headerValue)
+	request.Header.Set("Accept", "application/json")
+
+	for _, cookie := range cookies {
+		request.AddCookie(cookie)
+	}
+	client := &http.Client{}
+	res, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	body, err := io.ReadAll(res.Body)
+	result := make(map[string]interface{})
+	json.Unmarshal(body, &result)
+	return result, err
+}
+
+func showJudgement(submissionURL string, loginCookies []*http.Cookie) {
+	for i := 0; i < 20; i++ {
+
+		status, err := getSubmissionStatus(submissionURL, loginCookies)
+		if err != nil {
+			log.Fatal("Could not retrieve submission status")
+		}
+
+		status_id, err := getIntFromJsonField(status, "status_id")
+		if err != nil {
+			log.Fatalf("Could not get status_id from map %s\n", err)
+		}
+
+		testcase_index, err := getIntFromJsonField(status, "testcase_index")
+		if err != nil {
+			log.Fatalf("Could not get testcase_index from map %s\n", err)
+		}
+
+		htmlCode, err := getHtmlCodeFromJsonField(status, "row_html")
+
+		if err != nil {
+			log.Fatalf("Could not get htmlcode from field row_html %s\n", err)
+		}
+
+		testcase_total, err := getTotalTestCaseAmount(htmlCode)
+
+		fmt.Println(status)
+		time.Sleep(250 * time.Millisecond)
+	}
+}
+
+func getIntFromJsonField(status map[string]interface{}, field string) (int, error) {
+
+	if status_id_value, ok := status[field].(float64); ok {
+		// Convert float64 to int
+		return int(status_id_value), nil
+	} else {
+		return 0, errors.New("could not convert field to int")
+
+	}
+}
+
+func getHtmlCodeFromJsonField(status map[string]interface{}, field string) (string, error) {
+
+	if status_id_value, ok := status[field].(string); ok {
+		// Convert float64 to int
+		return string(status_id_value), nil
+	} else {
+		return "", errors.New("could not convert field to string")
+
+	}
+}
+
+func getTotalTestCaseAmount(htmlCode string) (int, error) {
+	testcase_amount := strings.Count(htmlCode, "Test case")
+	return testcase_amount, nil
 }
