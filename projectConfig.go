@@ -9,19 +9,15 @@ import (
 type projectConfig struct {
 	Language string `json:"language"`
 	MainFile string `json:"mainFile"`
+	Problem  string `json:"problem"`
 }
 
-func CreateProjectConfigFile(mainFile string) {
+func CreateProjectConfigFile(mainFile string, language Language, problem string) {
 	var projectConfig projectConfig
 
 	projectConfig.MainFile = mainFile
-	config, err := GetConfig()
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	projectConfig.Language = config.DefaultLang
+	projectConfig.Language = language.Name
+	projectConfig.Problem = problem
 
 	jsonData, err := json.MarshalIndent(projectConfig, "", " ")
 

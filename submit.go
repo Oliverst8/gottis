@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 var submiturl = "https://open.kattis.com/submit"
@@ -16,7 +18,7 @@ var loginurl = "https://open.kattis.com/login"
 var _headerKey = "User-Agent"
 var _headerValue = "kattis-cli-submit"
 
-func Login(config Config) *http.Response {
+func Login(config Config) (*http.Response, error) {
 	username := config.User.Username
 	token := config.User.Token
 	loginArgs := url.Values{}
@@ -28,9 +30,8 @@ func Login(config Config) *http.Response {
 	request.Header.Add(_headerKey, _headerValue)
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	client := &http.Client{}
-	res, _ := client.Do(request)
-	fmt.Println(res.StatusCode)
-	return res
+	res, err := client.Do(request)
+	return res, err
 }
 
 func Submit() {
@@ -38,9 +39,22 @@ func Submit() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	response := Login(config)
-	//submitFilesToKattis(getProjectFilenames(config), response.Cookies())
-	Submit2(submiturl, response.Cookies(), "twosum", "java", "Twosum.java", "", nil, nil, getProjectFilenames(config))
+	loginRes, err := Login(config)
+	if err != nil {
+		log.Fatal("Login failed")
+	}
+	fmt.Printf("Login response: %d\n", loginRes.StatusCode)
+	submitRes, err := submitFilesToKattis(getProjectFilenames(config), loginRes.Cookies())
+	if err != nil {
+		log.Fatal("Error submitting to kattis")
+	}
+	fmt.Printf("Submit response: %d\n", submitRes.StatusCode)
+	response := make([]byte, 128)
+	submitRes.Body.Read(response)
+	fmt.Println(response)
+	lastLine := strings.Split(string(response), "\n")[1]
+	submissionURL := strings.Split(lastLine, " ")[2]
+	fmt.Println(submissionURL)
 }
 
 func getProjectFilenames(config Config) []string {
@@ -52,34 +66,21 @@ func getProjectFilenames(config Config) []string {
 	return filenames
 }
 
-func submitFilesToKattis(files []string, cookies []*http.Cookie) *http.Response {
-	args := url.Values{}
-	request, _ := http.NewRequest(http.MethodPost, submiturl, bytes.NewBufferString(args.Encode()))
-	request.Header.Add(_headerKey, _headerValue)
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	return nil
-}
-
-// Submit makes a submission to the given submit_url.
-func Submit2(submitURL string, cookies []*http.Cookie, problem, language, mainClass, tag string, assignment, contest *string, files []string) (*http.Response, error) {
-	// Prepare form data
+func submitFilesToKattis(files []string, cookies []*http.Cookie) (*http.Response, error) {
+	projectConfig, err := GetProjectConfig()
+	if err != nil {
+		log.Fatal("Could not get project config")
+	}
+	//Prepare form data
 	data := make(map[string]string)
 	data["submit"] = "true"
 	data["submit_ctr"] = "2"
-	data["language"] = language
-	data["mainclass"] = mainClass
-	data["problem"] = problem
-	data["tag"] = tag
+	data["language"] = projectConfig.Language
+	data["mainclass"] = strings.TrimSuffix(projectConfig.MainFile, filepath.Ext(projectConfig.MainFile))
+	data["problem"] = projectConfig.Problem
+	data["tag"] = ""
 	data["script"] = "true"
 
-	if assignment != nil {
-		data["assignment"] = *assignment
-	}
-	if contest != nil {
-		data["contest"] = *contest
-	}
-
-	// Create a buffer to hold our form data
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
 
@@ -113,26 +114,25 @@ func Submit2(submitURL string, cookies []*http.Cookie, problem, language, mainCl
 		return nil, fmt.Errorf("error closing writer: %v", err)
 	}
 
-	// Create the HTTP request
-	req, err := http.NewRequest("POST", submitURL, &buf)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %v", err)
-	}
-
-	// Set headers
-	req.Header.Set("Content-Type", writer.FormDataContentType())
+	request, _ := http.NewRequest(http.MethodPost, submiturl, &buf)
+	request.Header.Add(_headerKey, _headerValue)
+	request.Header.Set("Content-Type", writer.FormDataContentType())
 
 	// Add cookies to the request
 	for _, cookie := range cookies {
-		req.AddCookie(cookie)
+		request.AddCookie(cookie)
 	}
 
 	// Perform the request
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := client.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("error performing request: %v", err)
 	}
 
 	return resp, nil
+}
+
+func showJudgement(submissionURL string) {
+	
 }

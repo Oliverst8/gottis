@@ -13,7 +13,6 @@ func Sanitize(text string) string {
 }
 
 func main() {
-
 	_, err := GetConfig()
 
 	if err != nil {
@@ -38,6 +37,7 @@ func main() {
 		Test()
 	case choice == "s" || choice == "submit":
 		fmt.Println("Submitting to Kattis")
+		os.Chdir("twosum")
 		Submit()
 	case choice == "h" || choice == "help":
 		Help()

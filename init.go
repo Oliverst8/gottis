@@ -138,7 +138,7 @@ func Init(projectName string, lang string) {
 	mainFile := createProjectFile(projectName, lang)
 
 	getTestFiles(projectName)
-
-	CreateProjectConfigFile(mainFile)
+	language, err := GetLanguage(lang)
+	CreateProjectConfigFile(mainFile, language, projectName)
 
 }
