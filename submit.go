@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -35,6 +36,7 @@ var _statusMap = map[int]string{
 	// 15: "<invalid value>",
 	16: "Accepted",
 }
+
 var submiturl = "https://open.kattis.com/submit"
 var loginurl = "https://open.kattis.com/login"
 var _headerKey = "User-Agent"
@@ -58,6 +60,10 @@ func Login(config Config) (*http.Response, error) {
 
 func Submit() {
 	config, err := GetConfig()
+	projectConfig, err := GetProjectConfig()
+	if err != nil {
+		log.Fatalf("error getting project config: %s", err)
+	}
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -66,7 +72,7 @@ func Submit() {
 		log.Fatal("Login failed")
 	}
 	fmt.Printf("Login response: %d\n", loginRes.StatusCode)
-	submitRes, err := submitFilesToKattis(getProjectFilenames(config), loginRes.Cookies())
+	submitRes, err := submitFilesToKattis(getProjectFilenames(config), loginRes.Cookies(), projectConfig)
 	if err != nil {
 		log.Fatal("Error submitting to kattis")
 	}
@@ -76,7 +82,7 @@ func Submit() {
 	lastLine := strings.Split(string(response), "\n")[1]
 	submissionURL := strings.Trim(strings.Split(lastLine, " ")[2], "\x00")
 	fmt.Println(submissionURL)
-	showJudgement(submissionURL, loginRes.Cookies())
+	showJudgement(submissionURL, loginRes.Cookies(), projectConfig)
 	fmt.Println("Submission Finished.")
 }
 
@@ -89,11 +95,8 @@ func getProjectFilenames(config Config) []string {
 	return filenames
 }
 
-func submitFilesToKattis(files []string, cookies []*http.Cookie) (*http.Response, error) {
-	projectConfig, err := GetProjectConfig()
-	if err != nil {
-		log.Fatal("Could not get project config")
-	}
+func submitFilesToKattis(files []string, cookies []*http.Cookie, projectConfig projectConfig) (*http.Response, error) {
+
 	//Prepare form data
 	data := make(map[string]string)
 	data["submit"] = "true"
@@ -176,13 +179,15 @@ func getSubmissionStatus(submissionURL string, cookies []*http.Cookie) (map[stri
 		return nil, err
 	}
 	body, err := io.ReadAll(res.Body)
+
 	result := make(map[string]interface{})
 	json.Unmarshal(body, &result)
 	return result, err
 }
 
-func showJudgement(submissionURL string, loginCookies []*http.Cookie) {
-	for i := 0; i < 20; i++ {
+func showJudgement(submissionURL string, loginCookies []*http.Cookie, projectConfig projectConfig) {
+	//testcases_succeded := 0
+	for {
 
 		status, err := getSubmissionStatus(submissionURL, loginCookies)
 		if err != nil {
@@ -207,9 +212,56 @@ func showJudgement(submissionURL string, loginCookies []*http.Cookie) {
 
 		testcase_total, err := getTotalTestCaseAmount(htmlCode)
 
-		fmt.Println(status)
+		printSubmissionProgressBar(projectConfig, status_id, testcase_index, htmlCode, testcase_total)
+
+		// stop if submission has finished running on kattis
+		if status_id > 5 {
+			print(htmlCode)
+			break
+		}
+
 		time.Sleep(250 * time.Millisecond)
 	}
+}
+
+func printSubmissionProgressBar(projectConfig projectConfig, status_id int, testcase_index int, htmlCode string, testcase_total int) {
+	fmt.Printf("\033[F\033[F\033[F") // Move up 3 lines (one for each line to be updated)
+	fmt.Printf("\r\033[K")           // Move to start of the line and clear it
+	fmt.Printf("Problem name: %s\n", projectConfig.Problem)
+	fmt.Printf("\r\033[K") // Move to start of the line and clear it
+	fmt.Printf("Status: %s\n", _statusMap[status_id])
+	fmt.Printf("\r\033[K") // Move to start of the line and clear it
+	fmt.Printf("Succeded: %d/%d\n", countAcceptedTestCases(htmlCode), testcase_total)
+	whiteColor := "\033[0m"
+	redColor := "\033[0;31m"
+	greenColor := "\033[0;32m"
+	wrongCharacter := "X"
+	rightCharacter := "#"
+	runningCharacter := "-"
+
+	testString := ""
+	for index := 1; index < testcase_total; index++ {
+		status := getTestCaseStatus(htmlCode, index)
+		if status == "not checked" {
+			testString += runningCharacter
+		} else if status == "Wrong Answer" {
+			testString += redColor + wrongCharacter + whiteColor
+		} else {
+			testString += greenColor + rightCharacter + whiteColor
+		}
+
+	}
+	fmt.Printf("[%s] %d/%d", testString, testcase_index, testcase_total)
+}
+
+func getTestCaseStatus(htmlCode string, testCaseIndex int) string {
+	re := regexp.MustCompile(fmt.Sprintf("Test case %d/[0-9]*:\\s(\\w+)", testCaseIndex))
+	return re.FindStringSubmatch(htmlCode)[1]
+}
+
+func countAcceptedTestCases(htmlCode string) int {
+	re := regexp.MustCompile("Test case [0-9]*/[0-9]*: Accepted")
+	return len(re.FindAll([]byte(htmlCode), -1))
 }
 
 func getIntFromJsonField(status map[string]interface{}, field string) (int, error) {
