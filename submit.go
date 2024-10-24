@@ -216,7 +216,6 @@ func showJudgement(submissionURL string, loginCookies []*http.Cookie, projectCon
 
 		// stop if submission has finished running on kattis
 		if status_id > 5 {
-			print(htmlCode)
 			break
 		}
 
