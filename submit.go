@@ -70,14 +70,11 @@ func Submit() {
 		HandleError("error logging into kattis", err)
 	}
 
-	fmt.Printf("Login response: %d\n", loginRes.StatusCode)
 	submitRes, err := submitFilesToKattis(getProjectFilenames(config), loginRes.Cookies(), projectConfig)
 
 	if err != nil {
 		HandleError("error submitting to kattis", err)
 	}
-
-	fmt.Printf("Submit response: %d\n", submitRes.StatusCode)
 
 	response, err := io.ReadAll(submitRes.Body)
 
@@ -194,12 +191,15 @@ func getSubmissionStatus(submissionURL string, cookies []*http.Cookie) (map[stri
 	result := make(map[string]interface{})
 
 	err = json.Unmarshal(body, &result)
-	HandleError("error putting result into map", err)
+	if err != nil {
+		HandleError("error putting result into map", err)
+	}
 
-	return result, err
+	return result, nil
 }
 
 func showJudgement(submissionURL string, loginCookies []*http.Cookie, projectConfig ProjectConfig) {
+	updatingProgressbar := false
 	for {
 
 		status, err := getSubmissionStatus(submissionURL, loginCookies)
@@ -225,8 +225,8 @@ func showJudgement(submissionURL string, loginCookies []*http.Cookie, projectCon
 
 		testcase_total, err := getTotalTestCaseAmount(htmlCode)
 
-		printSubmissionProgressBar(projectConfig, status_id, testcase_index, htmlCode, testcase_total)
-
+		printSubmissionProgressBar(projectConfig, status_id, testcase_index, htmlCode, testcase_total, updatingProgressbar)
+		updatingProgressbar = true
 		// stop if submission has finished running on kattis
 		if status_id > 5 {
 			break
@@ -236,9 +236,12 @@ func showJudgement(submissionURL string, loginCookies []*http.Cookie, projectCon
 	}
 }
 
-func printSubmissionProgressBar(projectConfig ProjectConfig, status_id int, testcase_index int, htmlCode string, testcase_total int) {
-	fmt.Printf("\033[F\033[F\033[F") // Move up 3 lines (one for each line to be updated)
-	fmt.Printf("\r\033[K")           // Move to start of the line and clear it
+func printSubmissionProgressBar(projectConfig ProjectConfig, status_id int, testcase_index int, htmlCode string, testcase_total int, updatingProgressbar bool) {
+
+	if updatingProgressbar {
+		fmt.Printf("\033[F\033[F\033[F\033[F") // Move up 3 lines (one for each line to be updated)
+		fmt.Printf("\r\033[K")                 // Move to start of the line and clear it
+	}
 	fmt.Printf("Problem name: %s\n", projectConfig.Problem)
 	fmt.Printf("\r\033[K") // Move to start of the line and clear it
 	fmt.Printf("Status: %s\n", _statusMap[status_id])
@@ -263,7 +266,7 @@ func printSubmissionProgressBar(projectConfig ProjectConfig, status_id int, test
 		}
 
 	}
-	fmt.Printf("[%s] %d/%d", testString, testcase_index, testcase_total)
+	fmt.Printf("[%s] %d/%d\n", testString, testcase_index, testcase_total)
 }
 
 func getTestCaseStatus(htmlCode string, testCaseIndex int) string {

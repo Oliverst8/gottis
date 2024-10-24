@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"runtime"
 	"strings"
@@ -15,7 +16,7 @@ func Sanitize(text string) string {
 func HandleError(message string, err error) {
 	buf := make([]byte, 1024)
 	runtime.Stack(buf, false)
-	panic(message + err.Error() + "\n" + string(buf))
+	panic(message + "\n" + err.Error() + "\n" + string(buf))
 }
 
 func main() {
@@ -28,17 +29,19 @@ func main() {
 	}
 
 	if len(os.Args) < 2 {
-		panic("Please supply an argument when using gottis.\n\"gottis <argument>\" see \"gottis help\" for more info")
+		log.Fatal("Please supply an argument when using gottis.\n\"gottis <argument>\" see \"gottis help\" for more info")
 	}
 	choice := Sanitize(os.Args[1])
 
 	switch {
 	case choice == "i" || choice == "init":
 		if len(os.Args) != 3 {
-			panic("Please supply a name for the Kattis excercise when initializing. See \"gottis help\" for more info")
+			log.Fatal("Please supply a name for the Kattis excercise when initializing. See \"gottis help\" for more info")
 		}
 		Init(os.Args[2], "java")
 	case choice == "t" || choice == "test":
+		// Debug statement
+		os.Chdir("twosum")
 		Test()
 	case choice == "s" || choice == "submit":
 		// Debug statement

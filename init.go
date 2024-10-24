@@ -128,7 +128,12 @@ func getTestFiles(problemName string) {
 func Init(projectName string, lang string) {
 
 	fmt.Println("Initialising project")
-	err := os.Mkdir(projectName, os.ModePerm)
+	_, err := os.Stat(projectName)
+	if !os.IsNotExist(err) {
+		fmt.Println("directory with problem name already exists aborting init.")
+		return
+	}
+	err = os.Mkdir(projectName, os.ModePerm)
 	if err != nil {
 		HandleError("could not create directory", err)
 	}
