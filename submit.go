@@ -237,19 +237,30 @@ func showJudgement(submissionURL string, loginCookies []*http.Cookie, projectCon
 }
 
 func printSubmissionProgressBar(projectConfig ProjectConfig, status_id int, testcase_index int, htmlCode string, testcase_total int, updatingProgressbar bool) {
-
+	whiteColor := "\033[0m"
+	redColor := "\033[0;31m"
+	greenColor := "\033[0;32m"
+	yellowColor := "\033[0;33m"
 	if updatingProgressbar {
 		fmt.Printf("\033[F\033[F\033[F\033[F") // Move up 3 lines (one for each line to be updated)
 		fmt.Printf("\r\033[K")                 // Move to start of the line and clear it
 	}
 	fmt.Printf("Problem name: %s\n", projectConfig.Problem)
 	fmt.Printf("\r\033[K") // Move to start of the line and clear it
-	fmt.Printf("Status: %s\n", _statusMap[status_id])
+	var color string
+	if status_id < 5 {
+		color = whiteColor
+	} else if status_id == 5 {
+		color = yellowColor
+	} else if status_id < 16 {
+		color = redColor
+	} else {
+		color = greenColor
+	}
+	fmt.Printf("Status: %s%s%s\n", color, _statusMap[status_id], whiteColor)
 	fmt.Printf("\r\033[K") // Move to start of the line and clear it
 	fmt.Printf("Succeded: %d/%d\n", countAcceptedTestCases(htmlCode), testcase_total)
-	whiteColor := "\033[0m"
-	redColor := "\033[0;31m"
-	greenColor := "\033[0;32m"
+
 	wrongCharacter := "X"
 	rightCharacter := "#"
 	runningCharacter := "-"
