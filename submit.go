@@ -219,7 +219,7 @@ func showJudgement(submissionURL string, loginCookies []*http.Cookie, projectCon
 			break
 		}
 
-		time.Sleep(250 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
