@@ -44,7 +44,7 @@ func main() {
 	case choice == "o" || choice == "open":
 		Open()
 	default:
-		fmt.Println("Not a regocnized command please see \"gottis help\"")
+		fmt.Println("Not a recognized command please see \"gottis help\"")
 	}
 
 }
