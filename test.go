@@ -20,8 +20,7 @@ func getAllFileNames(extensions []string) []string {
 
 	files, err := os.ReadDir(".")
 	if err != nil {
-		fmt.Println(err)
-		return []string{}
+		HandleError("error reading current directory", err)
 	}
 
 	var foundFiles []string
@@ -84,16 +83,14 @@ func updateProgressbar(testCases []Testcase, totalTests int) {
 func Test() {
 	projectConfig, err := GetProjectConfig()
 	if err != nil {
-		fmt.Println(err)
-		return
+		HandleError("error getting project config", err)
 	}
 
 	mainFile := projectConfig.MainFile
 
 	language, err := GetLanguage(projectConfig.Language)
 	if err != nil {
-		fmt.Println(err)
-		return
+		HandleError("error converting projetconfig language to type language", err)
 	}
 
 	if language.CompilerName != "" {
@@ -113,27 +110,31 @@ func Test() {
 		fileContent, err := os.ReadFile(file)
 
 		if err != nil {
-			fmt.Println(err)
+			HandleError("error trying to read file", err)
 		}
 
 		_, err = inputPipe.Write(fileContent)
 
 		if err != nil {
-			fmt.Println(err)
+			HandleError("error trying to pipe input intro program", err)
 		}
 
 		outputPipe, err := cmd.StdoutPipe()
 
 		if err != nil {
-			fmt.Println(err)
+			HandleError("error setting stdoutpipe", err)
 		}
 
-		cmd.Start()
+		err = cmd.Start()
+
+		if err != nil {
+			HandleError("error trying to start program", err)
+		}
 
 		content, err := io.ReadAll(outputPipe)
 
 		if err != nil {
-			fmt.Println(err)
+			HandleError("error trying to read output pipe", err)
 		}
 
 		actualContent := string(content[:])

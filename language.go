@@ -47,6 +47,6 @@ func goBoileplate(s string) string {
 }
 
 func javaBoilerplate(projectName string) string {
-	capatalizedProjectName := Capatalize(projectName)
+	capatalizedProjectName := Capitalize(projectName)
 	return "import java.util.Scanner;\n" + "\n" + "public class " + capatalizedProjectName + " {\n" + "   public static void main(String[] args) {\n" + "       Scanner sc = new Scanner(System.in);\n" + "       sc.close();\n" + "   }\n" + "}"
 }

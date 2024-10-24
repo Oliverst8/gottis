@@ -41,7 +41,7 @@ func DeleteFilesWithExtension(extension string) {
 	for _, file := range files {
 		err := os.Remove(file)
 		if err != nil {
-			fmt.Println(err)
+			HandleError("error trying to delete file", err)
 		}
 	}
 

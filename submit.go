@@ -62,40 +62,46 @@ func Submit() {
 	config, err := GetConfig()
 	projectConfig, err := GetProjectConfig()
 	if err != nil {
-		log.Fatalf("error getting project config: %s", err)
-	}
-	if err != nil {
-		fmt.Println(err)
+		HandleError("error getting project config", err)
 	}
 	loginRes, err := Login(config)
+
 	if err != nil {
-		log.Fatal("Login failed")
+		HandleError("error logging into kattis", err)
 	}
+
 	fmt.Printf("Login response: %d\n", loginRes.StatusCode)
 	submitRes, err := submitFilesToKattis(getProjectFilenames(config), loginRes.Cookies(), projectConfig)
+
 	if err != nil {
-		log.Fatal("Error submitting to kattis")
+		HandleError("error submitting to kattis", err)
 	}
+
 	fmt.Printf("Submit response: %d\n", submitRes.StatusCode)
+
 	response, err := io.ReadAll(submitRes.Body)
-	fmt.Println(string(response))
+
+	if err != nil {
+		HandleError("error trying to read submit response", err)
+	}
+
 	lastLine := strings.Split(string(response), "\n")[1]
 	submissionURL := strings.Trim(strings.Split(lastLine, " ")[2], "\x00")
-	fmt.Println(submissionURL)
+
 	showJudgement(submissionURL, loginRes.Cookies(), projectConfig)
-	fmt.Println("Submission Finished.")
+
 }
 
 func getProjectFilenames(config Config) []string {
 	language, err := GetLanguage(config.DefaultLang)
 	if err != nil {
-		log.Fatal("error getting the language")
+		HandleError("error getting the language", err)
 	}
 	filenames := getAllFileNames(language.Extensions)
 	return filenames
 }
 
-func submitFilesToKattis(files []string, cookies []*http.Cookie, projectConfig projectConfig) (*http.Response, error) {
+func submitFilesToKattis(files []string, cookies []*http.Cookie, projectConfig ProjectConfig) (*http.Response, error) {
 
 	//Prepare form data
 	data := make(map[string]string)
@@ -123,7 +129,12 @@ func submitFilesToKattis(files []string, cookies []*http.Cookie, projectConfig p
 		if err != nil {
 			return nil, fmt.Errorf("error opening file %s: %v", filePath, err)
 		}
-		defer file.Close()
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+				HandleError("error closing file", err)
+			}
+		}(file)
 
 		part, err := writer.CreateFormFile("sub_file[]", file.Name())
 		if err != nil {
@@ -164,7 +175,7 @@ func getSubmissionStatus(submissionURL string, cookies []*http.Cookie) (map[stri
 	request, err := http.NewRequest(http.MethodGet, submissionURL+"?json", bytes.NewBufferString(url.Values{}.Encode()))
 
 	if err != nil {
-		log.Fatalf("Could not generate http request %s\n", err)
+		HandleError("could not generate http request", err)
 	}
 
 	request.Header.Set(_headerKey, _headerValue)
@@ -181,12 +192,14 @@ func getSubmissionStatus(submissionURL string, cookies []*http.Cookie) (map[stri
 	body, err := io.ReadAll(res.Body)
 
 	result := make(map[string]interface{})
-	json.Unmarshal(body, &result)
+
+	err = json.Unmarshal(body, &result)
+	HandleError("error putting result into map", err)
+
 	return result, err
 }
 
-func showJudgement(submissionURL string, loginCookies []*http.Cookie, projectConfig projectConfig) {
-	//testcases_succeded := 0
+func showJudgement(submissionURL string, loginCookies []*http.Cookie, projectConfig ProjectConfig) {
 	for {
 
 		status, err := getSubmissionStatus(submissionURL, loginCookies)
@@ -196,18 +209,18 @@ func showJudgement(submissionURL string, loginCookies []*http.Cookie, projectCon
 
 		status_id, err := getIntFromJsonField(status, "status_id")
 		if err != nil {
-			log.Fatalf("Could not get status_id from map %s\n", err)
+			HandleError("could not get status_id from map", err)
 		}
 
 		testcase_index, err := getIntFromJsonField(status, "testcase_index")
 		if err != nil {
-			log.Fatalf("Could not get testcase_index from map %s\n", err)
+			HandleError("could not get testcase_index from map", err)
 		}
 
 		htmlCode, err := getHtmlCodeFromJsonField(status, "row_html")
 
 		if err != nil {
-			log.Fatalf("Could not get htmlcode from field row_html %s\n", err)
+			HandleError("Could not get htmlcode from field row_html", err)
 		}
 
 		testcase_total, err := getTotalTestCaseAmount(htmlCode)
@@ -223,7 +236,7 @@ func showJudgement(submissionURL string, loginCookies []*http.Cookie, projectCon
 	}
 }
 
-func printSubmissionProgressBar(projectConfig projectConfig, status_id int, testcase_index int, htmlCode string, testcase_total int) {
+func printSubmissionProgressBar(projectConfig ProjectConfig, status_id int, testcase_index int, htmlCode string, testcase_total int) {
 	fmt.Printf("\033[F\033[F\033[F") // Move up 3 lines (one for each line to be updated)
 	fmt.Printf("\r\033[K")           // Move to start of the line and clear it
 	fmt.Printf("Problem name: %s\n", projectConfig.Problem)

@@ -2,18 +2,17 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 )
 
-type projectConfig struct {
+type ProjectConfig struct {
 	Language string `json:"language"`
 	MainFile string `json:"mainFile"`
 	Problem  string `json:"problem"`
 }
 
 func CreateProjectConfigFile(mainFile string, language Language, problem string) {
-	var projectConfig projectConfig
+	var projectConfig ProjectConfig
 
 	projectConfig.MainFile = mainFile
 	projectConfig.Language = language.Name
@@ -21,32 +20,38 @@ func CreateProjectConfigFile(mainFile string, language Language, problem string)
 
 	jsonData, err := json.MarshalIndent(projectConfig, "", " ")
 
+	if err != nil {
+		HandleError("could not marshal to json", err)
+	}
+
 	err = os.WriteFile(".gottis", jsonData, os.ModePerm)
 
 	if err != nil {
-		fmt.Println(err)
+		HandleError("could not write json to the file", err)
 	}
 }
 
-func GetProjectConfig() (projectConfig, error) {
+func GetProjectConfig() (ProjectConfig, error) {
 	jsonFile, err := os.Open(".gottis")
 
 	if err != nil {
-		fmt.Println(err)
-		return projectConfig{}, err
+		return ProjectConfig{}, err
 	}
 
-	defer jsonFile.Close()
+	defer func(jsonFile *os.File) {
+		err := jsonFile.Close()
+		if err != nil {
+			HandleError("could not close the json file", err)
+		}
+	}(jsonFile)
 
-	var currentProjectConfig projectConfig
+	var currentProjectConfig ProjectConfig
 
 	err = json.NewDecoder(jsonFile).Decode(&currentProjectConfig)
 
 	if err != nil {
-		fmt.Println(err)
-		return projectConfig{}, err
+		return ProjectConfig{}, err
 	}
 
 	return currentProjectConfig, nil
-
 }

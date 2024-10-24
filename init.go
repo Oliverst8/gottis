@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func Capatalize(word string) string {
+func Capitalize(word string) string {
 	return strings.ToUpper(word[:1]) + word[1:]
 }
 
@@ -18,12 +18,12 @@ func createProjectFile(projectName string, lang string) string {
 	currentLang, err := GetLanguage(lang)
 
 	if err != nil {
-		fmt.Println(err)
+		HandleError("could not retrieve the language", err)
 	}
 
 	fileExtention := currentLang.Extensions[0]
 
-	capatalizedProjectName := Capatalize(projectName)
+	capatalizedProjectName := Capitalize(projectName)
 
 	fileContent := currentLang.Boilerplate(projectName)
 
@@ -32,8 +32,7 @@ func createProjectFile(projectName string, lang string) string {
 	err = os.WriteFile(fileName, []byte(fileContent), os.ModePerm)
 
 	if err != nil {
-		fmt.Println("error")
-		fmt.Println(err)
+		HandleError("could not write to file", err)
 	}
 
 	return fileName
@@ -112,17 +111,18 @@ func getTestFiles(problemName string) {
 	err := downloadTestFiles(problemName)
 
 	if err != nil {
-		fmt.Println(err)
+		HandleError("problem encountered during the downloading of test files", err)
 	}
 
 	err = unzipFile(problemName + ".zip")
 
 	if err != nil {
-		fmt.Println(err)
+		HandleError("problem encountered during the unzipping of the testfiles", err)
 	}
-
 	err = deleteFile(problemName + ".zip")
-
+	if err != nil {
+		HandleError("problem encountered during the deletion of the zipfile", err)
+	}
 }
 
 func Init(projectName string, lang string) {
@@ -130,15 +130,19 @@ func Init(projectName string, lang string) {
 	fmt.Println("Initialising project")
 	err := os.Mkdir(projectName, os.ModePerm)
 	if err != nil {
-		fmt.Println("Cannot create directory")
-		fmt.Println(err)
+		HandleError("could not create directory", err)
 	}
-	os.Chdir("./" + projectName)
+	err = os.Chdir("./" + projectName)
+	if err != nil {
+		HandleError("could not change directory", err)
+	}
 
 	mainFile := createProjectFile(projectName, lang)
 
 	getTestFiles(projectName)
 	language, err := GetLanguage(lang)
+	if err != nil {
+		HandleError("could not retrieve the language", err)
+	}
 	CreateProjectConfigFile(mainFile, language, projectName)
-
 }

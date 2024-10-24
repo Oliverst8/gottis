@@ -12,24 +12,20 @@ import (
 func Setup() {
 	path, err := GetConfigDir()
 	if err != nil {
-		fmt.Println(err)
-		return
+		HandleError("error getting config directory for current os", err)
 	}
 	_, err = os.Stat(path)
 	if errors.Is(err, os.ErrNotExist) {
 		e := os.Mkdir(path, os.ModePerm)
 		if e != nil {
-			fmt.Println("Cannot create directory")
-			fmt.Println(e)
-			return
+			HandleError("error creating project config directory", err)
 		}
 	} else if err != nil {
-		fmt.Println(err)
-		return
+		HandleError("error checking if project config directory exists", err)
 	}
 	err = os.Chdir(path)
 	if err != nil {
-		return
+		HandleError("error changing directory to project config directory", err)
 	}
 	setupSubmit, lang := getUserInputForConfig()
 
@@ -45,12 +41,12 @@ func Setup() {
 	jsonData, err := json.MarshalIndent(config, "", " ")
 
 	if err != nil {
-		fmt.Println(err)
+		HandleError("error converting config to json", err)
 	}
 
 	err = os.WriteFile("config.json", jsonData, os.ModePerm)
 	if err != nil {
-		fmt.Println(err)
+		HandleError("error writing config to file", err)
 	}
 }
 
@@ -71,6 +67,7 @@ func getKattisInfo() User {
 func getUserInputForConfig() (bool, int) {
 	fmt.Println("Choose a default language for gottis:")
 	printLanguages()
+
 	lang, err := readInt()
 	validOption := isValidAndInRange(lang, err, 0, len(langs)-1)
 	for !validOption {
@@ -109,8 +106,7 @@ func readBool() bool {
 func readInput(answer *string) {
 	_, err := fmt.Scanf("%s \n", answer)
 	if err != nil {
-		fmt.Println(err)
-		return
+		HandleError("error reading user input", err)
 	}
 }
 

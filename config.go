@@ -46,8 +46,7 @@ func GetConfigPath() (string, error) {
 	configDir, err := GetConfigDir()
 
 	if err != nil {
-		fmt.Println("Error getting config dir")
-		return "", nil
+		return "", err
 	}
 
 	return filepath.Join(configDir, "config.json"), nil
