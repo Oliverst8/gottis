@@ -40,8 +40,9 @@ func main() {
 	case choice == "s" || choice == "submit":
 		// Debug statement
 		os.Chdir("twosum")
-
 		internal.Submit()
+	case choice == "setup":
+		internal.Setup()
 	case choice == "h" || choice == "help":
 		internal.Help()
 	case choice == "o" || choice == "open":
