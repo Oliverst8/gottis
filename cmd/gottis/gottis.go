@@ -34,12 +34,10 @@ func main() {
 		}
 		internal.Init(os.Args[2], "java")
 	case choice == "t" || choice == "test":
-		// Debug statement
-		os.Chdir("twosum")
+
 		internal.Test()
 	case choice == "s" || choice == "submit":
-		// Debug statement
-		os.Chdir("twosum")
+		
 		internal.Submit()
 	case choice == "setup":
 		internal.Setup()
