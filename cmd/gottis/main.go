@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/oliverst8/gottis/internal"
 	"log"
 	"os"
-	"runtime"
 	"strings"
 )
 
@@ -13,18 +13,12 @@ func Sanitize(text string) string {
 	return text
 }
 
-func HandleError(message string, err error) {
-	buf := make([]byte, 1024)
-	runtime.Stack(buf, false)
-	panic(message + "\n" + err.Error() + "\n" + string(buf))
-}
-
 func main() {
-	_, err := GetConfig()
+	_, err := internal.GetConfig()
 
 	// Setup gottis if it hasn't been setup before
 	if err != nil {
-		Setup()
+		internal.Setup()
 		return
 	}
 
@@ -38,20 +32,20 @@ func main() {
 		if len(os.Args) != 3 {
 			log.Fatal("Please supply a name for the Kattis excercise when initializing. See \"gottis help\" for more info")
 		}
-		Init(os.Args[2], "java")
+		internal.Init(os.Args[2], "java")
 	case choice == "t" || choice == "test":
 		// Debug statement
 		os.Chdir("twosum")
-		Test()
+		internal.Test()
 	case choice == "s" || choice == "submit":
 		// Debug statement
 		os.Chdir("twosum")
 
-		Submit()
+		internal.Submit()
 	case choice == "h" || choice == "help":
-		Help()
+		internal.Help()
 	case choice == "o" || choice == "open":
-		Open()
+		internal.Open()
 	default:
 		panic("Not a recognized command please see \"gottis help\"")
 	}
