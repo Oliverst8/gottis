@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/oliverst8/gottis/internal"
+	"github.com/oliverst8/gottis/internal/tui"
 	"log"
 	"os"
 	"strings"
@@ -23,7 +24,8 @@ func main() {
 	}
 
 	if len(os.Args) < 2 {
-		log.Fatal("Please supply an argument when using gottis.\n\"gottis <argument>\" see \"gottis help\" for more info")
+		tui.Draw()
+		//log.Fatal("Please supply an argument when using gottis.\n\"gottis <argument>\" see \"gottis help\" for more info")
 	}
 	choice := Sanitize(os.Args[1])
 
@@ -37,7 +39,7 @@ func main() {
 
 		internal.Test()
 	case choice == "s" || choice == "submit":
-		
+
 		internal.Submit()
 	case choice == "setup":
 		internal.Setup()
