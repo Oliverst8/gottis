@@ -40,13 +40,18 @@ func Draw() {
 	help := tview.NewBox().SetBorder(true).SetTitle("Help")
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(home, 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
 			AddItem(files, 0, 1, false).
 			AddItem(log, 0, 1, false).
 			AddItem(help, 0, 1, false), 0, 1, false)
 
-	err := app.SetRoot(flex, true).SetFocus(flex).Run()
+	home.SetDrawFunc(func(screen tcell.Screen, x int, y int, width int, height int) (int, int, int, int) {
+		flex.SetRect(x+1, y+1, width-2, height-2) // Adjust inner layout size
+		flex.Draw(screen)
+		return x, y, width, height
+	})
+
+	err := app.SetRoot(home, true).SetFocus(flex).Run()
 	if err != nil {
 		panic(err)
 	}
