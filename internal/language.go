@@ -15,9 +15,9 @@ type Language struct {
 
 var langs = [5]Language{
 	{Name: "java", Extensions: []string{".java"}, Boilerplate: javaBoilerplate, CompilerName: "javac", CompilerArgs: []string{}, RunName: "java"},
+	{Name: "python", Extensions: []string{".py"}, Boilerplate: pythonBoileplate, CompilerName: "", CompilerArgs: []string{}, RunName: "python"},
 	{Name: "go", Extensions: []string{".go"}, Boilerplate: goBoileplate, CompilerName: "", CompilerArgs: []string{}, RunName: ""},
 	{Name: "c", Extensions: []string{".c"}, Boilerplate: cBoileplate, CompilerName: "", CompilerArgs: []string{}, RunName: ""},
-	{Name: "python", Extensions: []string{".py"}, Boilerplate: pythonBoileplate, CompilerName: "", CompilerArgs: []string{}, RunName: ""},
 	{Name: "c#", Extensions: []string{".cs"}, Boilerplate: csBoileplate, CompilerName: "", CompilerArgs: []string{}, RunName: ""},
 }
 
