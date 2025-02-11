@@ -13,17 +13,17 @@ func Sanitize(text string) string {
 	return text
 }
 
-func parse() (map[string]string, string) {
+func parse() (map[string]string, []string) {
 	flags := make(map[string]string)
-	choice := ""
+	var args []string
 	for i, arg := range os.Args {
 		if strings.HasPrefix(arg, "-") {
 			flags[strings.TrimPrefix(arg, "-")] = os.Args[i+1]
 		} else if i != 0 && !strings.HasPrefix(os.Args[i-1], "-") {
-			choice = arg
+			args = append(args, arg)
 		}
 	}
-	return flags, choice
+	return flags, args
 }
 
 func main() {
@@ -35,13 +35,13 @@ func main() {
 		return
 	}
 
-	flags, choice := parse()
+	flags, args := parse()
 
-	if choice == "" {
+	if args[0] == "" {
 		log.Fatal("Please supply an argument when using gottis.\n\"gottis <argument>\" see \"gottis help\" for more info")
 	}
 
-	choice = Sanitize(choice)
+	choice := Sanitize(args[0])
 	var language string
 	if flags["lang"] == "" {
 		language = config.DefaultLang
@@ -51,11 +51,11 @@ func main() {
 
 	switch {
 	case choice == "i" || choice == "init":
-		if len(os.Args) != 3 {
+		if len(args) != 2 {
 			log.Fatal("Please supply a name for the Kattis excercise when initializing. See \"gottis help\" for more info")
 		}
 
-		internal.Init(os.Args[2], language)
+		internal.Init(args[1], language)
 	case choice == "t" || choice == "test":
 
 		internal.Test()
