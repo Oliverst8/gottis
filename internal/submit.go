@@ -282,7 +282,12 @@ func printSubmissionProgressBar(projectConfig ProjectConfig, status_id int, test
 
 func getTestCaseStatus(htmlCode string, testCaseIndex int) string {
 	re := regexp.MustCompile(fmt.Sprintf("Test case %d/[0-9]*:\\s(\\w+ ?\\w*|\\w*)", testCaseIndex))
-	return re.FindStringSubmatch(htmlCode)[1]
+	tmp := re.FindStringSubmatch(htmlCode)
+	if len(tmp) >= 1 {
+		return tmp[1]
+	} else {
+		return ""
+	}
 }
 
 func countAcceptedTestCases(htmlCode string) int {
